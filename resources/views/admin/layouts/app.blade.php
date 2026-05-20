@@ -117,7 +117,7 @@
 		<div class="pre-loader">
 			<div class="pre-loader-box">
 				<div class="loader-logo">
-					<img src="{{url('assets-admin')}}/vendors/images/started.svg" alt="" />
+					<img src="{{url('assets-admin')}}/vendors/images/sisment.png" alt="" />
 				</div>
 				<div class="loader-progress" id="progress_div">
 					<div class="bar" id="bar1"></div>
@@ -346,7 +346,7 @@
 		<div class="left-side-bar">
 			<div class="brand-logo">
 				<a href="/">
-					<img src="{{url('assets-admin')}}/vendors/images/started.svg" alt="" class="dark-logo" />
+					<img src="{{url('assets-admin')}}/vendors/images/sisment.png" alt="" class="dark-logo" />
 					<img
 						src="{{url('assets-admin')}}/vendors/images/strated-white.svg"
 						alt=""
@@ -367,10 +367,10 @@
 						</li>
 						<li class="dropdown">
 							<a href="javascript:;" class="dropdown-toggle">
-								<span class="micon dw dw-file"></span><span class="mtext">Data Master</span>
+								<span class="micon dw dw-file"></span><span class="mtext">Data Siswa</span>
 							</a>
 							<ul class="submenu">
-								<li><a href="/admin/kategori" class="@if ($activePage == 'kategori') active @endif">Data Kategori</a></li>
+								<li><a href="/admin/siswa" class="@if ($activePage == 'siswa') active @endif">Pendaftaran autentikasi</a></li>
 								<li><a href="/admin/jenis" class="@if ($activePage == 'jenis') active @endif">Data Jenis</a></li>
 							</ul>
 						</li>
@@ -410,17 +410,23 @@
 		<script src="{{url('assets-admin')}}/src/plugins/datatables/js/vfs_fonts.js"></script>
 		<!-- Datatable Setting js -->
 		<script src="{{url('assets-admin')}}/vendors/scripts/datatable-setting.js"></script>
-		<script>
-	    window.setTimeout(function() {
-	      $(".alert").fadeTo(500, 0).slideUp(500, function(){
-	        $(this).remove(); 
-	      });
-	    }, 5000);
-	  </script>
-	  <script>
-	    $(document).ready(function() {
-	        $('.select2').select2();
-	    });
-		</script>
-	</body>
+
+
+<script>
+    window.setTimeout(function() {
+      $(".alert").fadeTo(500, 0).slideUp(500, function(){
+        $(this).remove(); 
+      });
+    }, 5000);
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2();
+    });
+</script>
+
+@stack('scripts')
+
+</body>
 </html>

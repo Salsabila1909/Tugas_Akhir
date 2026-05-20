@@ -3,17 +3,24 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Api\RfidController;
+use App\Http\Controllers\Api\FingerprintController;
+
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| RFID ROUTES
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::post('/rfid/register', [RfidController::class, 'register']);
+
+Route::get('/rfid/get-siswa', [RfidController::class, 'getSiswa']);
+
+/*
+|--------------------------------------------------------------------------
+| FINGERPRINT ROUTES
+|--------------------------------------------------------------------------
+*/
+
+// ESP8266 kirim fingerprint
+Route::post('/fingerprint/register', [FingerprintController::class, 'register']);
