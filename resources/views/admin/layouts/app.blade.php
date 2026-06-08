@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>Started</title>
+		<title>Sisment</title>
 
 		<!-- Site favicon -->
 		<link
@@ -371,8 +371,19 @@
 							</a>
 							<ul class="submenu">
 								<li><a href="/admin/siswa" class="@if ($activePage == 'siswa') active @endif">Pendaftaran autentikasi</a></li>
-								<li><a href="/admin/jenis" class="@if ($activePage == 'jenis') active @endif">Data Jenis</a></li>
 							</ul>
+						</li>
+						<li>
+						<a href="/admin/produk" class="dropdown-toggle no-arrow @if ($activePage == 'produk') active @endif">
+							<span class="micon bi bi-box-seam"></span>
+							<span class="mtext">Produk</span>
+						</a>
+						</li>
+						<li>
+						<a href="/admin/transaksi" class="dropdown-toggle no-arrow @if ($activePage == 'transaksi') active @endif">
+							<span class="micon bi bi-box-seam"></span>
+							<span class="mtext">Transaksi</span>
+						</a>
 						</li>
 					</ul>
 				</div>

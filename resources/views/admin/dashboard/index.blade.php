@@ -31,8 +31,7 @@
                      <div class="weight-600 font-30 text-blue">{{Auth::User()->name}}</div>
                   </h4>
                   <p class="font-18 max-width-600 text-justify">
-                        Sistem Informasi Perpustakaan adalah sebuah sistem berbasis komputer yang digunakan untuk mengelola seluruh kegiatan operasional perpustakaan secara otomatis dan terintegrasi, seperti pengelolaan data buku, data anggota, proses peminjaman dan pengembalian buku, serta pencatatan denda dan laporan.
-                  </p>
+                         Sistem Payment Siswa adalah sebuah sistem berbasis komputer yang digunakan untuk mengelola seluruh proses pembayaran siswa secara otomatis dan terintegrasi, seperti pengelolaan data siswa, pencatatan transaksi pembayaran, autentikasi pengguna, serta pembuatan laporan pembayaran. Sistem ini dirancang untuk meningkatkan keamanan, efisiensi, dan keakuratan dalam proses pembayaran, serta mengurangi penggunaan transaksi tunai di lingkungan sekolah.
                </div>
             </div>
          </div>

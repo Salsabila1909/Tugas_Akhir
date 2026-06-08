@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\SiswaController;
+use App\Http\Controllers\Admin\ProdukController;
 
 /*
 |--------------------------------------------------------------------------
@@ -101,4 +102,31 @@ Route::prefix('admin/siswa')
 
         Route::get('/fingerprint/check/{id}', 'checkFingerprint')->name('fingerprint.check');
 
+    });
+
+   Route::prefix('admin/produk')
+    ->name('admin.produk.')
+    ->middleware(['auth', 'cekLevel:1,2'])
+    ->controller(ProdukController::class)
+    ->group(function () {
+
+        Route::get('/', 'index')->name('index');
+        Route::get('/add', 'add')->name('add');
+        Route::post('/store', 'store')->name('store');
+
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/update/{id}', 'update')->name('update');
+
+        Route::delete('/delete/{id}', 'delete')->name('delete');
+
+        // scan page
+        Route::get('/scan/{id}', 'scan')->name('scan');
+
+        // realtime check (WAJIB)
+        Route::get('/check/{id}', 'checkScan')->name('check');
+
+        // save QR dari ESP32 / scanner
+        Route::post('/kode/{id}', 'saveKodeBarang')
+            ->name('kode.store')
+            ->middleware('throttle:60,1');
     });
