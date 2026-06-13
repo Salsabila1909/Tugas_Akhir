@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Siswa;
 use App\Models\Rfid;
 use App\Models\Fingerprint;
+use App\Models\Transaksi;
 use Illuminate\Support\Facades\Storage;
 
 class SiswaController extends Controller
@@ -214,4 +215,19 @@ class SiswaController extends Controller
             'success' => false
         ]);
     }
-}
+
+            public function riwayat($id)
+        {
+            $siswa = Siswa::findOrFail($id);
+
+            $transaksi = Transaksi::with('produk')
+                            ->where('siswa_id', $id)
+                            ->latest()
+                            ->get();
+
+            return view('admin.siswa.riwayat', compact(
+                'siswa',
+                'transaksi'
+            ));
+        }
+        }

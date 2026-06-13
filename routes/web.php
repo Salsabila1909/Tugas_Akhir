@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\ProdukController;
+use App\Http\Controllers\Admin\TransaksiController;
+use App\Http\Controllers\Auth\SiswaRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,16 +27,52 @@ Route::get('/clear', function() {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH
+| Guest
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('auth.login');
+
+Route::middleware('guest')->group(function () {
+
+    Route::get('/', [LoginController::class, 'index']);
+
+    Route::get('/login', [LoginController::class, 'index'])
+        ->name('login');
+
+    Route::post('/login', [LoginController::class, 'login']);
+
+    // Register siswa
+    Route::get('/register-siswa', [SiswaRegisterController::class, 'create'])
+        ->name('siswa.register');
+
+    Route::post('/register-siswa', [SiswaRegisterController::class, 'store'])
+        ->name('siswa.register.store');
 });
 
-Route::get('/login', [LoginController::class, 'index']);
-Route::post('/login', [LoginController::class, 'login'])->name('login');
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| Auth
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::post('/logout', [LoginController::class, 'logout'])
+        ->name('logout');
+
+});
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/admin/home', function () {
+        return view('admin.home');
+    });
+
+    Route::get('/siswa/home', function () {
+        return view('siswa.home');
+    });
+
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -94,6 +132,7 @@ Route::prefix('admin/siswa')
 
         // RFID
         Route::post('/assign-rfid', 'assignRfid')->name('rfid.assign');
+        
 
         // ======================
         // FINGERPRINT (FIXED)
@@ -102,6 +141,9 @@ Route::prefix('admin/siswa')
 
         Route::get('/fingerprint/check/{id}', 'checkFingerprint')->name('fingerprint.check');
 
+        // RIWAYAT TRANSAKSI SISWA
+        Route::get('/riwayat/{id}', 'riwayat')
+            ->name('riwayat');
     });
 
    Route::prefix('admin/produk')
@@ -129,4 +171,69 @@ Route::prefix('admin/siswa')
         Route::post('/kode/{id}', 'saveKodeBarang')
             ->name('kode.store')
             ->middleware('throttle:60,1');
+    });
+
+
+
+Route::prefix('admin/transaksi')
+    ->name('admin.transaksi.')
+    ->middleware(['auth', 'cekLevel:1,2'])
+    ->controller(TransaksiController::class)
+    ->group(function () {
+
+        // =========================
+        // INDEX
+        // =========================
+        Route::get('/', 'index')
+            ->name('index');
+
+        // =========================
+        // PAYMENT
+        // =========================
+        Route::get('/payment', 'createPayment')
+            ->name('payment');
+
+        Route::post('/payment/store', 'storePayment')
+            ->name('storePayment');
+
+        // =========================
+        // TOPUP
+        // =========================
+        Route::get('/topup', 'createTopup')
+            ->name('topup');
+
+        Route::post('/topup/store', 'storeTopup')
+            ->name('storeTopup');
+
+        // =========================
+        // RFID PAGE
+        // =========================
+        Route::get('/{id}/tab-kartu', 'tabKartu')
+            ->name('tab_kartu');
+
+        // realtime polling RFID
+        Route::get('/{id}/check-rfid', 'checkRfid')
+            ->name('check_rfid');
+
+        // =========================
+        // FINGERPRINT PAGE
+        // =========================
+        Route::get('/{id}/sidik_jari', 'fingerprintPage')
+            ->name('sidik_jari');
+
+        // realtime polling fingerprint
+        Route::get('/{id}/check-fingerprint', 'checkFingerprint')
+            ->name('check_fingerprint');
+
+        // =========================
+        // FINISH TRANSAKSI
+        // =========================
+        Route::post('/{id}/finish', 'finish')
+            ->name('finish');
+
+        // =========================
+        // DELETE
+        // =========================
+        Route::delete('/{id}', 'destroy')
+            ->name('delete');
     });

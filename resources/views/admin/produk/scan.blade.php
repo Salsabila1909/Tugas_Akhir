@@ -6,33 +6,57 @@
 
 <div class="min-height-200px">
 
-    {{-- HEADER --}}
+    <!-- PAGE HEADER -->
     <div class="page-header">
         <div class="row">
-            <div class="col-md-6 col-sm-12">
+
+            <div class="col-md-12 col-sm-12">
+
                 <div class="title">
                     <h4>Scan QR Produk</h4>
                 </div>
-                <p class="text-muted">Menunggu scan QR dari ESP32 / scanner</p>
+
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">Produk</li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('admin.produk.index') }}">Data Produk</a>
+                        </li>
+                        <li class="breadcrumb-item active">Scan QR Produk</li>
+                    </ol>
+                </nav>
+
             </div>
-            <div class="col-md-6 col-sm-12 text-right">
-                <a href="{{ route('admin.produk.index') }}"
-                class="btn btn-secondary">
+
+        </div>
+    </div>
+
+    <!-- CARD -->
+    <div class="pd-20 card-box mb-30">
+
+        <div class="clearfix">
+            <div class="pull-left">
+                <h2 class="text-primary h2">
+                    <i class="fa fa-qrcode"></i>
+                    Scan QR Produk
+                </h2>
+            </div>
+
+            <div class="pull-right">
+                <a href="{{ route('admin.produk.index') }}" class="btn btn-primary btn-sm">
                     <i class="fa fa-arrow-left"></i> Kembali
                 </a>
             </div>
         </div>
-    </div>
 
-    {{-- CARD --}}
-    <div class="pd-20 card-box mb-30">
+        <hr>
 
         <div class="row">
 
-            {{-- DATA PRODUK --}}
+            <!-- DETAIL PRODUK -->
             <div class="col-md-6">
 
-                <h5>Detail Produk</h5>
+                <h5 class="mb-3">Detail Produk</h5>
 
                 <table class="table table-bordered">
                     <tr>
@@ -54,6 +78,7 @@
                     <tr>
                         <th>Kode Barang</th>
                         <td id="kode-barang">
+
                             @if($produk->kode_barang)
                                 <span class="badge badge-success">
                                     {{ $produk->kode_barang }}
@@ -63,25 +88,25 @@
                                     Belum Scan
                                 </span>
                             @endif
+
                         </td>
                     </tr>
                 </table>
 
             </div>
 
-            {{-- STATUS SCAN --}}
+            <!-- STATUS SCAN -->
             <div class="col-md-6 text-center">
 
                 <div id="status-box">
-                    
 
                     @if(!$produk->kode_barang)
 
                         <div class="alert alert-info">
                             <i class="fa fa-qrcode fa-3x"></i>
                             <br><br>
-                            <h5>Menunggu kode barang...</h5>
-                            <p>Silakan scan kode_barang / scanner</p>
+                            <h5>Menunggu Scan QR</h5>
+                            <p>Silakan scan QR / kode barang menggunakan ESP32 atau scanner</p>
                         </div>
 
                     @else
@@ -89,8 +114,8 @@
                         <div class="alert alert-success">
                             <i class="fa fa-check-circle fa-3x"></i>
                             <br><br>
-                            <h5>Scan Berhasil!</h5>
-                            <p>Kode sudah tersimpan</p>
+                            <h5>Scan Berhasil</h5>
+                            <p>Kode barang sudah tersimpan di sistem</p>
                         </div>
 
                     @endif
@@ -105,16 +130,17 @@
 
 </div>
 
-{{-- AJAX REALTIME CHECK --}}
+@endsection
+
+
+{{-- REALTIME CHECK --}}
 @if(!$produk->kode_barang)
 <script>
-let interval = setInterval(function () {
+
+let interval = setInterval(() => {
 
     fetch("{{ route('admin.produk.check', $produk->id) }}")
-        .then(res => {
-            if (!res.ok) throw new Error("Network error");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
 
             if (data.kode_barang) {
@@ -126,7 +152,7 @@ let interval = setInterval(function () {
                     <div class="alert alert-success">
                         <i class="fa fa-check-circle fa-3x"></i>
                         <br><br>
-                        <h5>Scan Berhasil!</h5>
+                        <h5>Scan Berhasil</h5>
                         <p>Kode Barang: <b>${data.kode_barang}</b></p>
                     </div>
                 `;
@@ -135,19 +161,19 @@ let interval = setInterval(function () {
             }
 
         })
-        .catch(err => {
+        .catch(() => {
             console.log("Waiting for scan...");
         });
 
 }, 2000);
 
-// optional: stop polling kalau tab tidak aktif
+
+// stop polling saat tab tidak aktif
 document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
         clearInterval(interval);
     }
 });
+
 </script>
 @endif
-
-@endsection

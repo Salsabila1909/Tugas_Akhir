@@ -2,32 +2,57 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
-use Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         return view('auth.login');
     }
 
     public function login(Request $request)
     {
-        $credentials = $request->only('username', 'password');
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+        ]);
 
-        if (Auth::attempt($credentials)) {
-            // Jika autentikasi berhasil
-            return redirect()->intended('/admin/home');
-        } else {
-            return redirect()->route('login')->with("error","Username atau Password Salah !");
+        // login attempt + hanya user aktif
+        if (!Auth::attempt([
+            'username' => $request->username,
+            'password' => $request->password,
+            'status' => 1
+        ])) {
+            return redirect('/login')
+                ->with('error', 'Username atau Password Salah!');
         }
 
-        // Jika autentikasi gagal
-        return back()->withErrors([
-            'username' => 'The provided credentials do not match our records.',
-        ]);
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        // =====================
+        // ROLE CHECK
+        // =====================
+
+        if ($user->level == 1) {
+            return redirect('/admin/home');
+        }
+
+        if ($user->level == 0) {
+            return redirect('/siswa/home');
+        }
+
+        // kalau level tidak valid
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login')
+            ->with('error', 'Level user tidak valid');
     }
 
     public function logout(Request $request)
@@ -35,10 +60,9 @@ class LoginController extends Controller
         Auth::logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with("success","Anda Berhasil Logout!");
+        return redirect('/login')
+            ->with('success', 'Anda Berhasil Logout!');
     }
-
 }

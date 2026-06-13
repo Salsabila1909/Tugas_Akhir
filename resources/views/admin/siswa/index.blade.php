@@ -69,7 +69,7 @@
                     <th>Status</th>
                     <th>UID RFID</th>
                     <th>Finger ID</th>
-                    <th class="text-center">Action</th>
+                    <th class="text-center" width="180">Action</th>
                 </tr>
             </thead>
 
@@ -140,13 +140,20 @@
                             <a href="{{ route('admin.siswa.fingerprint', $data->id) }}"
                               class="btn btn-warning btn-xs"
                                 title="Scan Fingerprint">
-                                <i class="fa fa-fingerprint"></i>
+                                <i class="fa fa-spinner fa-spin"></i>
                             </a>
                         @else
                             <span class="badge badge-success" title="Fingerprint Terdaftar">
                                 <i class="fa fa-check"></i>
                             </span>
                         @endif
+
+                        {{-- RIWAYAT TRANSAKSI --}}
+                        <a href="{{ route('admin.siswa.riwayat', $data->id) }}"
+                        class="btn btn-info btn-xs"
+                        title="Riwayat Transaksi">
+                            <i class="fa fa-history"></i>
+                        </a>
 
                         {{-- EDIT --}}
                         <a href="/admin/siswa/edit/{{ $data->id }}"

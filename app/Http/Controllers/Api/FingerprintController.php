@@ -4,12 +4,43 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Siswa;
 use App\Models\Fingerprint;
+use App\Models\Transaksi;
 
 class FingerprintController extends Controller
 {
+    /**
+     * =========================
+     * CEK SISWA PENDING REGISTER
+     * =========================
+     */
+    public function pending()
+    {
+        $siswa = Siswa::where('status', 'belum_terdaftar')
+            ->whereDoesntHave('fingerprint')
+            ->first();
+
+        if (!$siswa) {
+            return response()->json([
+                'success' => false
+            ]);
+        }
+
+        return response()->json([
+            'success'  => true,
+            'siswa_id' => $siswa->id,
+            'nama'     => $siswa->nama
+        ]);
+    }
+
+    /**
+     * =========================
+     * REGISTER FINGERPRINT
+     * =========================
+     */
     public function register(Request $request)
     {
         $request->validate([
@@ -18,9 +49,6 @@ class FingerprintController extends Controller
 
         $finger_id = trim($request->finger_id);
 
-        // =========================
-        // CEK FINGERPRINT SUDAH ADA
-        // =========================
         $cekFinger = Fingerprint::where(
             'finger_id',
             $finger_id
@@ -34,41 +62,252 @@ class FingerprintController extends Controller
             ]);
         }
 
-        // =========================
-        // CARI SISWA YANG BELUM TERDAFTAR
-        // =========================
-        $siswa = Siswa::whereDoesntHave(
-            'fingerprint'
-        )->first();
+        $siswa = Siswa::where('status', 'belum_terdaftar')
+            ->whereDoesntHave('fingerprint')
+            ->first();
 
         if (!$siswa) {
 
             return response()->json([
                 'success' => false,
-                'message' => 'Semua siswa sudah terdaftar'
+                'message' => 'Tidak ada siswa pending'
             ]);
         }
 
-        // =========================
-        // SIMPAN FINGERPRINT
-        // =========================
         Fingerprint::create([
-            'finger_id' => $finger_id,
-            'siswa_id' => $siswa->id
+            'siswa_id'  => $siswa->id,
+            'finger_id' => $finger_id
         ]);
 
-        // =========================
-        // UPDATE STATUS
-        // =========================
-        $siswa->update([
-            'status' => 'terdaftar'
-        ]);
+        /**
+         * Jika RFID sudah ada
+         * maka status menjadi terdaftar
+         */
+        if ($siswa->rfid) {
+
+            $siswa->update([
+                'status' => 'terdaftar'
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Fingerprint berhasil didaftarkan',
-            'finger_id' => $finger_id,
-            'siswa' => $siswa->nama
+            'success'   => true,
+            'message'   => 'Fingerprint berhasil didaftarkan',
+            'siswa_id'  => $siswa->id,
+            'siswa'     => $siswa->nama,
+            'finger_id' => $finger_id
         ]);
+    }
+
+    /**
+     * =========================
+     * VERIFY TRANSAKSI
+     * =========================
+     */
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'finger_id' => 'required'
+        ]);
+
+        return DB::transaction(function () use ($request) {
+
+            /**
+             * Cari fingerprint
+             */
+            $finger = Fingerprint::with('siswa')
+                ->where('finger_id', $request->finger_id)
+                ->first();
+
+            if (!$finger) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fingerprint tidak dikenali'
+                ]);
+            }
+
+            /**
+             * Cari siswa
+             */
+            $siswa = $finger->siswa;
+
+            if (!$siswa) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan'
+                ]);
+            }
+
+            /**
+             * Pastikan siswa aktif
+             */
+            if ($siswa->status !== 'terdaftar') {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa belum aktif'
+                ]);
+            }
+
+            /**
+             * Cari transaksi aktif
+             */
+            $transaksi = Transaksi::with('produk')
+                ->where('siswa_id', $siswa->id)
+                ->where('status', 'rfid_verified')
+                ->latest()
+                ->lockForUpdate()
+                ->first();
+
+            if (!$transaksi) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada transaksi aktif'
+                ]);
+            }
+
+            /**
+             * =========================
+             * TOPUP
+             * =========================
+             */
+            if ($transaksi->type == 'topup') {
+
+                $saldoAwal = $siswa->saldo;
+
+                $siswa->increment(
+                    'saldo',
+                    $transaksi->total
+                );
+
+                $transaksi->update([
+                    'status'    => 'success',
+                    'finger_id' => $request->finger_id,
+                    'paid_at'   => now()
+                ]);
+
+                $siswa->refresh();
+
+                return response()->json([
+                    'success'      => true,
+                    'message'      => 'Topup berhasil',
+                    'transaksi_id' => $transaksi->id,
+                    'siswa'        => $siswa->nama,
+                    'saldo_awal'   => $saldoAwal,
+                    'saldo_akhir'  => $siswa->saldo
+                ]);
+            }
+
+            /**
+             * =========================
+             * PAYMENT
+             * =========================
+             */
+            if ($transaksi->type == 'payment') {
+
+                /**
+                 * Produk wajib ada
+                 */
+                if (!$transaksi->produk) {
+
+                    $transaksi->update([
+                        'status' => 'failed'
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Produk tidak ditemukan'
+                    ]);
+                }
+
+                /**
+                 * Cek stok
+                 */
+                if (
+                    $transaksi->produk->stok <
+                    $transaksi->qty
+                ) {
+
+                    $transaksi->update([
+                        'status' => 'failed'
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Stok tidak mencukupi'
+                    ]);
+                }
+
+                /**
+                 * Cek saldo
+                 */
+                if (
+                    $siswa->saldo <
+                    $transaksi->total
+                ) {
+
+                    $transaksi->update([
+                        'status' => 'failed'
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Saldo tidak cukup',
+                        'saldo'   => $siswa->saldo,
+                        'total'   => $transaksi->total
+                    ]);
+                }
+
+                $saldoAwal = $siswa->saldo;
+
+                /**
+                 * Kurangi saldo
+                 */
+                $siswa->decrement(
+                    'saldo',
+                    $transaksi->total
+                );
+
+                /**
+                 * Kurangi stok
+                 */
+                $transaksi->produk->decrement(
+                    'stok',
+                    $transaksi->qty
+                );
+
+                /**
+                 * Selesaikan transaksi
+                 */
+                $transaksi->update([
+                    'status'    => 'success',
+                    'finger_id' => $request->finger_id,
+                    'paid_at'   => now()
+                ]);
+
+                $siswa->refresh();
+
+                return response()->json([
+                    'success'      => true,
+                    'message'      => 'Payment berhasil',
+                    'transaksi_id' => $transaksi->id,
+                    'siswa'        => $siswa->nama,
+                    'produk'       => $transaksi->produk->nama_produk,
+                    'qty'          => $transaksi->qty,
+                    'total'        => $transaksi->total,
+                    'saldo_awal'   => $saldoAwal,
+                    'saldo_akhir'  => $siswa->saldo,
+                    'stok_sisa'    => $transaksi->produk->fresh()->stok
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Type transaksi tidak valid'
+            ]);
+        });
     }
 }

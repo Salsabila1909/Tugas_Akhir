@@ -381,7 +381,7 @@
 						</li>
 						<li>
 						<a href="/admin/transaksi" class="dropdown-toggle no-arrow @if ($activePage == 'transaksi') active @endif">
-							<span class="micon bi bi-box-seam"></span>
+							<span class="micon bi bi-arrow-left-right"></span>
 							<span class="mtext">Transaksi</span>
 						</a>
 						</li>
@@ -396,8 +396,8 @@
 				@yield('content')
 				<div class="footer-wrap pd-20 mb-20 card-box">
 					Started - Copyright © {{date('Y')}}
-					<a href="https://furgetech.com" style="text-decoration: none" target="_blank"
-						>Furgetech Theme</a
+					<a href="https://www.instagram.com/sditjuarapadangpanjangofficial/?hl=id" style="text-decoration: none" target="_blank"
+						>SD IT JUARA PADAPA</a
 					>
 				</div>
 			</div>

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\RfidController;
@@ -9,25 +8,54 @@ use App\Http\Controllers\Api\EspController;
 
 /*
 |--------------------------------------------------------------------------
-| RFID ROUTES
+| RFID
 |--------------------------------------------------------------------------
 */
+Route::get(
+    '/rfid/pending',
+    [RfidController::class, 'pending']
+);
 
-Route::post('/rfid/register', [RfidController::class, 'register']);
+Route::post(
+    '/rfid/register',
+    [RfidController::class, 'register']
+);
 
-Route::get('/rfid/get-siswa', [RfidController::class, 'getSiswa']);
+Route::post(
+    '/rfid/tab-kartu',
+    [RfidController::class, 'tab_kartu']
+);
+/*
+|--------------------------------------------------------------------------
+| FINGERPRINT
+|--------------------------------------------------------------------------
+*/
+Route::get(
+    '/fingerprint/pending',
+    [FingerprintController::class,'pending']
+);
+
+Route::post(
+    '/fingerprint/register',
+    [FingerprintController::class,'register']
+);
+
+Route::post(
+    '/fingerprint/verify',
+    [FingerprintController::class,'verify']
+);
 
 /*
 |--------------------------------------------------------------------------
-| FINGERPRINT ROUTES
+| ESP32 SCANNER
 |--------------------------------------------------------------------------
 */
+Route::prefix('esp')->group(function () {
 
-// ESP8266 kirim fingerprint
-Route::post('/fingerprint/register', [FingerprintController::class, 'register']);
-
-// endpoint utama ESP scan
     Route::post('/scan', [EspController::class, 'scan']);
 
-    // monitoring terakhir scan (optional dashboard realtime)
     Route::get('/last-scan', [EspController::class, 'lastScan']);
+
+    Route::post('/mark-used', [EspController::class, 'markUsed']);
+
+});

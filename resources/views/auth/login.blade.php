@@ -39,46 +39,80 @@
 				</div>
 				<div class="col-md-6 col-lg-5">
 					<div class="login-box bg-white box-shadow border-radius-10">
-						<div class="login-title">
-							<h2 class="text-center text-primary">Silahkan Login</h2>
-						</div>
-							@if (session('error'))
-					      <div class="alert alert-primary">
-					         {{ session('error')}}
-					         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-					         <span aria-hidden="true">&times;</span>
-					         </button>
-					      </div>
-					    @endif
-					    @if (session('success'))
-					      <div class="alert alert-success">
-					         {{ session('success')}}
-					         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-					         <span aria-hidden="true">&times;</span>
-					         </button>
-					      </div>
-					    @endif
-						<form method="POST" action="{{ route('login') }}">
-							@csrf
-							<div class="input-group custom">
-								<input type="text" autofocus class="form-control form-control-lg" placeholder="Username" name="username">
-								<div class="input-group-append custom">
-									<span class="input-group-text"><i class="icon-copy dw dw-user1"></i></span>
-								</div>
+							<div class="login-title">
+								<h2 class="text-center text-primary">Silahkan Login</h2>
 							</div>
-							<div class="input-group custom">
-						        <input type="password" class="form-control form-control-lg" placeholder="**********" name="password" id="password">
-						        <div class="input-group-append custom" onclick="togglePassword()">
-						            <span class="input-group-text"><i class="dw dw-padlock1" id="toggleIcon"></i></span>
-						        </div>
-						    </div>
-							<div class="row">
-								<div class="col-sm-12">
-									<div class="input-group mb-0 mt-3">
-										<button class="btn btn-primary btn-lg btn-block" type="submit">Login</button>
+
+							@if (session('error'))
+							<div class="alert alert-primary">
+								{{ session('error') }}
+								<button type="button" class="close" data-dismiss="alert">
+									<span>&times;</span>
+								</button>
+							</div>
+							@endif
+
+							@if (session('success'))
+							<div class="alert alert-success">
+								{{ session('success') }}
+								<button type="button" class="close" data-dismiss="alert">
+									<span>&times;</span>
+								</button>
+							</div>
+							@endif
+
+							<form method="POST" action="{{ route('login') }}">
+								@csrf
+
+								<div class="input-group custom">
+									<input type="text"
+										autofocus
+										class="form-control form-control-lg"
+										placeholder="Username"
+										name="username">
+
+									<div class="input-group-append custom">
+										<span class="input-group-text">
+											<i class="icon-copy dw dw-user1"></i>
+										</span>
 									</div>
 								</div>
+
+								<div class="input-group custom">
+									<input type="password"
+										class="form-control form-control-lg"
+										placeholder="**********"
+										name="password"
+										id="password">
+
+									<div class="input-group-append custom"
+										onclick="togglePassword()">
+
+										<span class="input-group-text">
+											<i class="dw dw-padlock1" id="toggleIcon"></i>
+										</span>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-sm-12">
+										<div class="input-group mb-0 mt-3">
+											<button class="btn btn-primary btn-lg btn-block"
+													type="submit">
+												Login
+											</button>
+										</div>
+									</div>
+								</div>
+							</form>
+
+							{{-- REGISTER SISWA --}}
+							<div class="text-center mt-3">
+								<a href="{{ route('siswa.register') }}">
+									Belum punya akun? Daftar sebagai Siswa
+								</a>
 							</div>
+						</div>
 						</form>
 					</div>
 				</div>
@@ -137,5 +171,13 @@
 </html>
 @endguest
 @auth
-  <script>window.location = "/admin/home";</script>
+    @if(auth()->user()->level == 1)
+        <script>
+            window.location = "/admin/home";
+        </script>
+    @else
+        <script>
+            window.location = "/siswa/home";
+        </script>
+    @endif
 @endauth

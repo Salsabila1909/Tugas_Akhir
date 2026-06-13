@@ -31,4 +31,9 @@ class Siswa extends Model
     {
         return $this->hasOne(Fingerprint::class);
     }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Produk;
+use App\Models\EspScan;
 
 class ProdukController extends Controller
 {
@@ -133,12 +134,55 @@ class ProdukController extends Controller
     | CHECK SCAN (AJAX REALTIME)
     |-----------------------------------------
     */
-    public function checkScan($id)
-    {
-        $produk = Produk::findOrFail($id);
+   public function checkScan($id)
+{
+    $produk = Produk::findOrFail($id);
 
+    // kalau sudah punya kode barang
+    if ($produk->kode_barang) {
         return response()->json([
             'kode_barang' => $produk->kode_barang
         ]);
     }
+
+    // ambil scan terbaru yang belum digunakan
+    $scan = EspScan::where('used', 0)
+        ->latest()
+        ->first();
+
+    if (!$scan) {
+        return response()->json([
+            'kode_barang' => null
+        ]);
+    }
+
+    // cek duplikat
+    $exists = Produk::where('kode_barang', $scan->kode_barang)
+        ->exists();
+
+    if ($exists) {
+
+        $scan->update([
+            'used' => 1
+        ]);
+
+        return response()->json([
+            'kode_barang' => null
+        ]);
+    }
+
+    // simpan ke produk
+    $produk->update([
+        'kode_barang' => $scan->kode_barang
+    ]);
+
+    // lock scan
+    $scan->update([
+        'used' => 1
+    ]);
+
+    return response()->json([
+        'kode_barang' => $scan->kode_barang
+    ]);
+}
 }
