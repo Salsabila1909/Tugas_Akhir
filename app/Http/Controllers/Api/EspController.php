@@ -22,27 +22,116 @@ class EspController extends Controller
         'kode_barang' => 'required'
     ]);
 
+    $kode = $request->kode_barang;
+
+    // cari produk READY
+    $produk = Produk::where('kode_barang', $kode)
+        ->where('status', 'ready')
+        ->first();
+
+    /*
+    |--------------------------------------------------------------------------
+    | BARCODE BELUM TERDAFTAR
+    |--------------------------------------------------------------------------
+    */
+    if (!$produk) {
+
+        EspScan::create([
+            'kode_barang' => $kode,
+            'used' => 0,
+            'waktu_scan' => now()
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'mode' => 'draft',
+            'message' => 'Barcode tersimpan, assign ke produk'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT
+    |--------------------------------------------------------------------------
+    */
     $scan = EspScan::create([
-        'kode_barang' => $request->kode_barang,
-        'used' => 0,
-        'waktu_scan' => now()
+        'produk_id'   => $produk->id,
+        'kode_barang' => $kode,
+        'used'        => 0,
+        'waktu_scan'  => now()
     ]);
 
     return response()->json([
         'status' => true,
+        'mode' => 'payment',
         'scan_id' => $scan->id,
-        'kode_barang' => $request->kode_barang
+        'produk' => [
+            'id'    => $produk->id,
+            'nama'  => $produk->nama_produk,
+            'harga' => $produk->harga,
+            'stok'  => $produk->stok,
+        ]
     ]);
 }
 
-    /*
-    |--------------------------------------
-    | LAST SCAN (ADMIN MONITOR)
-    |--------------------------------------
-    */
-    public function lastScan()
+public function checkScan($produk_id)
 {
     $scan = EspScan::where('used', 0)
+        ->whereNull('produk_id')
+        ->latest()
+        ->first();
+
+    if (!$scan) {
+        return response()->json([
+            'status' => false
+        ]);
+    }
+
+    $produk = Produk::find($produk_id);
+
+    if (!$produk) {
+        return response()->json([
+            'status' => false
+        ]);
+    }
+
+    $exists = Produk::where('kode_barang', $scan->kode_barang)->exists();
+
+    if ($exists) {
+
+        $scan->update([
+            'used' => 1
+        ]);
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Kode barang sudah digunakan'
+        ]);
+    }
+
+    $produk->update([
+        'kode_barang' => $scan->kode_barang,
+        'status' => 'ready'
+    ]);
+
+    $scan->update([
+        'used' => 1,
+        'produk_id' => $produk->id
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'kode_barang' => $scan->kode_barang
+    ]);
+}
+
+public function paymentRealtime()
+{
+    $scan = EspScan::with('produk')
+        ->where('used', 0)
+        ->whereHas('produk', function ($q) {
+            $q->where('status', 'ready');
+        })
         ->latest()
         ->first();
 
@@ -55,105 +144,36 @@ class EspController extends Controller
     return response()->json([
         'status' => true,
         'scan_id' => $scan->id,
-        'kode_barang' => $scan->kode_barang
+        'produk' => [
+            'id' => $scan->produk->id,
+            'nama' => $scan->produk->nama_produk,
+            'harga' => $scan->produk->harga,
+        ]
     ]);
 }
-    /*
-    |--------------------------------------
-    | PAYMENT SCAN (ESP32)
-    |--------------------------------------
-    */
-    public function paymentScan(Request $request)
-    {
-        $request->validate([
-            'kode_barang' => 'required'
-        ]);
 
-        $produk = Produk::where('kode_barang', $request->kode_barang)->first();
+public function markUsed(Request $request)
+{
+    $request->validate([
+        'scan_id' => 'required|integer'
+    ]);
 
-        if (!$produk) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Produk tidak ditemukan'
-            ]);
-        }
+    $scan = EspScan::find($request->scan_id);
 
-        $scan = EspScan::create([
-            'produk_id'   => $produk->id,
-            'kode_barang' => $request->kode_barang,
-            'used'        => 0,
-            'waktu_scan'  => now()
-        ]);
-
+    if (!$scan) {
         return response()->json([
-            'status'  => true,
-            'scan_id' => $scan->id,
-            'produk'  => [
-                'id'    => $produk->id,
-                'nama'  => $produk->nama_produk,
-                'harga' => $produk->harga,
-            ]
-        ]);
+            'status' => false,
+            'message' => 'Scan tidak ditemukan'
+        ], 404);
     }
 
-    /*
-    |--------------------------------------
-    | LAST PAYMENT SCAN (REALTIME UI)
-    |--------------------------------------
-    */
-    public function lastPaymentScan()
-    {
-        $scan = EspScan::with('produk')
-            ->where('used', 0)
-            ->orderBy('id', 'desc')
-            ->first();
+    $scan->update([
+        'used' => 1
+    ]);
 
-        if (!$scan || !$scan->produk) {
-            return response()->json([
-                'status' => false
-            ]);
-        }
-
-        return response()->json([
-            'status'  => true,
-            'scan_id' => $scan->id,
-            'produk'  => [
-                'id'    => $scan->produk->id,
-                'nama'  => $scan->produk->nama_produk,
-                'harga' => $scan->produk->harga,
-            ]
-        ]);
-    }
-
-    /*
-    |--------------------------------------
-    | MARK USED (LOCK SCAN)
-    |--------------------------------------
-    */
-    public function markUsed(Request $request)
-    {
-        $request->validate([
-            'scan_id' => 'required'
-        ]);
-
-        $scan = EspScan::where('id', $request->scan_id)
-            ->where('used', 0)
-            ->first();
-
-        if (!$scan) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Scan tidak valid'
-            ]);
-        }
-
-        $scan->update([
-            'used' => 1
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Scan locked'
-        ]);
-    }
+    return response()->json([
+        'status' => true,
+        'message' => 'Scan berhasil dikunci'
+    ]);
+}
 }

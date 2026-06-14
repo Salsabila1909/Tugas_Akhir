@@ -69,14 +69,15 @@ class TransaksiController extends Controller
             $request->qty;
 
         $transaksi = Transaksi::create([
-            'type' => 'payment',
-            'siswa_id' => $request->siswa_id,
-            'produk_id' => $produk->id,
-            'qty' => $request->qty,
-            'harga_satuan' => $produk->harga,
-            'total' => $total,
-            'status' => 'pending'
-        ]);
+        'type' => 'payment',
+        'siswa_id' => $request->siswa_id,
+        'produk_id' => $produk->id,
+        'qty' => $request->qty,
+        'harga_satuan' => $produk->harga,
+        'total' => $total,
+        'status' => 'pending',
+        'metode' => 'rfid_fingerprint'
+    ]);
 
         return redirect()->route(
             'admin.transaksi.tab_kartu',
@@ -110,11 +111,12 @@ class TransaksiController extends Controller
             'total' => 'required|numeric|min:1000'
         ]);
 
-        $transaksi = Transaksi::create([
+       $transaksi = Transaksi::create([
             'type' => 'topup',
             'siswa_id' => $request->siswa_id,
             'total' => $request->total,
-            'status' => 'pending'
+            'status' => 'pending',
+            'metode' => 'rfid_fingerprint'
         ]);
 
         return redirect()->route(

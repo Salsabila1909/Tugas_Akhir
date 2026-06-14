@@ -48,16 +48,18 @@ return new class extends Migration
             $table->enum('status', [
                 'pending',
                 'rfid_verified',
-                'finger_verified',
-                'success',
-                'failed'
+                'success'
             ])->default('pending');
 
             /**
              * METODE AUTHENTICATION
              * bisa salah satu atau dua tahap
              */
-            $table->enum('metode', ['rfid', 'fingerprint'])->nullable();
+            $table->enum('metode', [
+                'rfid',
+                'fingerprint',
+                'rfid_fingerprint'
+            ])->nullable();
 
             /**
              * SNAPSHOT AUTH (untuk audit & history)

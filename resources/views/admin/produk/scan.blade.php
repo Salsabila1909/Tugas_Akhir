@@ -134,41 +134,38 @@
 
 
 {{-- REALTIME CHECK --}}
-@if(!$produk->kode_barang)
 <script>
 
 let interval = setInterval(() => {
 
-    fetch("{{ route('admin.produk.check', $produk->id) }}")
+    fetch('/api/esp/check-scan/{{ $produk->id }}')
         .then(res => res.json())
         .then(data => {
 
-            if (data.kode_barang) {
+            if (!data.kode_barang) return;
 
-                document.getElementById('kode-barang').innerHTML =
-                    `<span class="badge badge-success">${data.kode_barang}</span>`;
+            // STOP langsung setelah dapat data valid
+            clearInterval(interval);
 
-                document.getElementById('status-box').innerHTML = `
-                    <div class="alert alert-success">
-                        <i class="fa fa-check-circle fa-3x"></i>
-                        <br><br>
-                        <h5>Scan Berhasil</h5>
-                        <p>Kode Barang: <b>${data.kode_barang}</b></p>
-                    </div>
-                `;
+            document.getElementById('kode-barang').innerHTML =
+                `<span class="badge badge-success">${data.kode_barang}</span>`;
 
-                clearInterval(interval);
-            }
-
+            document.getElementById('status-box').innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fa fa-check-circle fa-3x"></i>
+                    <br><br>
+                    <h5>Scan Berhasil</h5>
+                    <p>Kode Barang: <b>${data.kode_barang}</b></p>
+                    <p>Status: <b>${data.mode}</b></p>
+                </div>
+            `;
         })
         .catch(() => {
-            console.log("Waiting for scan...");
+            console.log("Waiting for ESP scan...");
         });
 
 }, 2000);
 
-
-// stop polling saat tab tidak aktif
 document.addEventListener("visibilitychange", function () {
     if (document.hidden) {
         clearInterval(interval);
@@ -176,4 +173,3 @@ document.addEventListener("visibilitychange", function () {
 });
 
 </script>
-@endif

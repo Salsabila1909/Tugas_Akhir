@@ -50,12 +50,19 @@ Route::post(
 | ESP32 SCANNER
 |--------------------------------------------------------------------------
 */
+
+
 Route::prefix('esp')->group(function () {
 
+    // scan dari ESP32
     Route::post('/scan', [EspController::class, 'scan']);
 
-    Route::get('/last-scan', [EspController::class, 'lastScan']);
+    // scan produk draft
+    Route::get('/check-scan/{produk_id}', [EspController::class, 'checkScan']);
 
+    // payment realtime
+    Route::get('/payment-realtime', [EspController::class, 'paymentRealtime']);
+
+    // lock scan
     Route::post('/mark-used', [EspController::class, 'markUsed']);
-
 });

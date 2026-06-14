@@ -129,14 +129,11 @@
 
 let lastScanId = 0;
 
-// ==========================
-// FETCH SCAN ESP
-// ==========================
 async function updateScan() {
 
     try {
 
-        const res = await fetch('/api/esp/last-payment-scan?t=' + Date.now(), {
+        const res = await fetch('/api/esp/payment-realtime?t=' + Date.now(), {
             cache: "no-store"
         });
 
@@ -148,24 +145,18 @@ async function updateScan() {
 
         lastScanId = json.scan_id;
 
-        // UPDATE UI
         document.getElementById('produk-box').style.display = 'block';
         document.getElementById('nama_produk').innerText = json.produk.nama;
         document.getElementById('harga_produk').innerText = json.produk.harga;
         document.getElementById('produk_id').value = json.produk.id;
 
-        // LOCK SCAN
         lockScan(json.scan_id);
 
     } catch (err) {
-        console.log(err);
+        console.log("waiting scan...");
     }
 }
 
-
-// ==========================
-// LOCK SCAN
-// ==========================
 function lockScan(scanId) {
 
     fetch('/api/esp/mark-used', {
@@ -174,30 +165,17 @@ function lockScan(scanId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ scan_id: scanId })
-    })
-    .then(res => res.json())
-    .then(res => {
-        console.log("LOCK:", scanId);
-    })
-    .catch(err => console.log(err));
+    });
 }
 
-
-// ==========================
-// LOOP REALTIME
-// ==========================
 setInterval(updateScan, 1500);
 updateScan();
 
-
-// ==========================
-// VALIDASI FORM
-// ==========================
 document.getElementById('form-payment').addEventListener('submit', function (e) {
 
     if (!document.getElementById('produk_id').value) {
         e.preventDefault();
-        alert('Belum ada hasil scan dari ESP32!');
+        alert('Belum ada hasil scan dari ESP!');
     }
 
 });

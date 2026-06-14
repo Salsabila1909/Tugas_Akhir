@@ -13,7 +13,8 @@ class Produk extends Model
         'nama_produk',
         'kategori',
         'harga',
-        'stok'
+        'stok',
+        'status',
     ];
 
     public function scans()

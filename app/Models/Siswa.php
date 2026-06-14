@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Siswa extends Model
+class Siswa extends Authenticatable
 {
     use HasFactory;
 
     protected $table = 'siswa';
 
     protected $fillable = [
-        'rfid_id',
+        'user_id',
         'nis',
         'nama',
         'kontak',
@@ -21,6 +21,10 @@ class Siswa extends Model
         'saldo',
         'status'
     ];
+     public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function rfid()
     {

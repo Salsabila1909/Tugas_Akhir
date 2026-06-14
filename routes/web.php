@@ -146,13 +146,14 @@ Route::prefix('admin/siswa')
             ->name('riwayat');
     });
 
-   Route::prefix('admin/produk')
+  Route::prefix('admin/produk')
     ->name('admin.produk.')
     ->middleware(['auth', 'cekLevel:1,2'])
     ->controller(ProdukController::class)
     ->group(function () {
 
         Route::get('/', 'index')->name('index');
+
         Route::get('/add', 'add')->name('add');
         Route::post('/store', 'store')->name('store');
 
@@ -161,13 +162,10 @@ Route::prefix('admin/siswa')
 
         Route::delete('/delete/{id}', 'delete')->name('delete');
 
-        // scan page
+        // halaman scan barcode
         Route::get('/scan/{id}', 'scan')->name('scan');
 
-        // realtime check (WAJIB)
-        Route::get('/check/{id}', 'checkScan')->name('check');
-
-        // save QR dari ESP32 / scanner
+        // input manual barcode
         Route::post('/kode/{id}', 'saveKodeBarang')
             ->name('kode.store')
             ->middleware('throttle:60,1');
