@@ -12,7 +12,7 @@ class SiswaRegisterController extends Controller
 {
     public function create()
     {
-        return view('auth.register-siswa');
+        return view('auth.register');
     }
 
     public function store(Request $request)

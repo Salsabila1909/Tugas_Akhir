@@ -3,11 +3,11 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\HomeController;
-use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\ProdukController;
 use App\Http\Controllers\Admin\TransaksiController;
 use App\Http\Controllers\Auth\SiswaRegisterController;
+use App\Http\Controllers\Siswa\HomeController as SiswaHomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,10 +41,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
 
     // Register siswa
-    Route::get('/register-siswa', [SiswaRegisterController::class, 'create'])
+    Route::get('/register', [SiswaRegisterController::class, 'create'])
         ->name('siswa.register');
 
-    Route::post('/register-siswa', [SiswaRegisterController::class, 'store'])
+    Route::post('/register', [SiswaRegisterController::class, 'store'])
         ->name('siswa.register.store');
 });
 
@@ -61,17 +61,25 @@ Route::middleware('auth')->group(function () {
 
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','admin'])
+    ->prefix('admin')
+    ->group(function () {
 
-    Route::get('/admin/home', function () {
-        return view('admin.home');
-    });
-
-    Route::get('/siswa/home', function () {
-        return view('siswa.home');
-    });
+        Route::get('/home', [HomeController::class, 'index'])
+            ->name('admin.home');
 
 });
+
+Route::middleware(['auth', 'siswa'])
+    ->prefix('siswa')
+    ->group(function () {
+
+        Route::get('/home', [SiswaHomeController::class, 'index'])
+            ->name('siswa.home');
+
+        Route::get('/change', [SiswaHomeController::class, 'change']);
+        Route::post('/change_password', [SiswaHomeController::class, 'change_password']);
+    });
 
 
 /*
@@ -80,27 +88,8 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/keluar', [HomeController::class, 'keluar']);
-Route::get('/admin/home', [HomeController::class, 'index']);
 Route::get('/admin/change', [HomeController::class, 'change']);
 Route::post('/admin/change_password', [HomeController::class, 'change_password']);
-
-/*
-|--------------------------------------------------------------------------
-| KATEGORI
-|--------------------------------------------------------------------------
-*/
-Route::prefix('admin/kategori')
-    ->name('admin.kategori.')
-    ->middleware('cekLevel:1,2')
-    ->controller(KategoriController::class)
-    ->group(function () {
-        Route::get('/', 'read')->name('read');
-        Route::get('/add', 'add')->name('add');
-        Route::post('/create', 'create')->name('create');
-        Route::get('/edit/{id}', 'edit')->name('edit');
-        Route::post('/update/{id}', 'update')->name('update');
-        Route::get('/delete/{id}', 'delete')->name('delete');
-    });
 
 /*
 |--------------------------------------------------------------------------

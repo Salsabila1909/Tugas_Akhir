@@ -109,7 +109,7 @@
 							{{-- REGISTER SISWA --}}
 							<div class="text-center mt-3">
 								<a href="{{ route('siswa.register') }}">
-									Belum punya akun? Daftar sebagai Siswa
+									Belum punya akun? Daftar
 								</a>
 							</div>
 						</div>

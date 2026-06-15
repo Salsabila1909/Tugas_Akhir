@@ -10,7 +10,11 @@ class SiswaMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check() || Auth::user()->level != 0) {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        if (Auth::user()->level != 0) {
             abort(403);
         }
 

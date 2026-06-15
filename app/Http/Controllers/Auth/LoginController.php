@@ -8,11 +8,28 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
+    /**
+     * Halaman Login
+     */
     public function index()
     {
+        if (Auth::check()) {
+
+            if (Auth::user()->level == 1) {
+                return redirect()->route('admin.home');
+            }
+
+            if (Auth::user()->level == 0) {
+                return redirect()->route('siswa.home');
+            }
+        }
+
         return view('auth.login');
     }
 
+    /**
+     * Proses Login
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -20,13 +37,14 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        // login attempt + hanya user aktif
-        if (!Auth::attempt([
+        $credentials = [
             'username' => $request->username,
             'password' => $request->password,
-            'status' => 1
-        ])) {
-            return redirect('/login')
+            'status'   => 1,
+        ];
+
+        if (!Auth::attempt($credentials)) {
+            return redirect()->route('login')
                 ->with('error', 'Username atau Password Salah!');
         }
 
@@ -34,27 +52,29 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
-        // =====================
-        // ROLE CHECK
-        // =====================
-
+        // Admin
         if ($user->level == 1) {
-            return redirect('/admin/home');
+            return redirect()->route('admin.home');
         }
 
+        // Siswa
         if ($user->level == 0) {
-            return redirect('/siswa/home');
+            return redirect()->route('siswa.home');
         }
 
-        // kalau level tidak valid
+        // Jika level tidak valid
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')
-            ->with('error', 'Level user tidak valid');
+        return redirect()->route('login')
+            ->with('error', 'Level user tidak valid!');
     }
 
+    /**
+     * Logout
+     */
     public function logout(Request $request)
     {
         Auth::logout();
@@ -62,7 +82,7 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')
+        return redirect()->route('login')
             ->with('success', 'Anda Berhasil Logout!');
     }
 }
