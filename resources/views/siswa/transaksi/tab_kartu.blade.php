@@ -1,6 +1,6 @@
-<!-- resources/views/admin/transaksi/tap_kartu.blade.php -->
+<!-- resources/views/siswa/transaksi/tap_kartu.blade.php -->
 
-@extends('admin.layouts.app', [
+@extends('siswa.layouts.app', [
 'activePage' => 'transaksi',
 ])
 
@@ -13,14 +13,14 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="title">
-                    <h4>Verifikasi RFID Transaksi</h4>
+                    <h4>Verifikasi Kartu Transaksi</h4>
                 </div>
 
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="#">Transaksi</a></li>
-                        <li class="breadcrumb-item"><a href="/admin/transaksi">Data Transaksi</a></li>
-                        <li class="breadcrumb-item active">Verifikasi RFID</li>
+                        <li class="breadcrumb-item"><a href="/siswa/transaksi">Data Transaksi</a></li>
+                        <li class="breadcrumb-item active">Verifikasi Kartu</li>
                     </ol>
                 </nav>
             </div>
@@ -34,12 +34,12 @@
             <div class="pull-left">
                 <h2 class="text-primary h2">
                     <i class="icon-copy fa fa-credit-card"></i>
-                    Tap Kartu RFID
+                    Tap Kartu
                 </h2>
             </div>
 
             <div class="pull-right">
-                <a href="/admin/transaksi" class="btn btn-primary btn-sm">
+                <a href="/siswa/transaksi" class="btn btn-primary btn-sm">
                     <i class="fa fa-arrow-left"></i> Back
                 </a>
             </div>
@@ -49,7 +49,7 @@
 
         <!-- INFO -->
         <div class="alert alert-info text-center">
-            Silahkan tempelkan kartu RFID untuk verifikasi pembayaran transaksi.
+            Silahkan tempelkan kartu untuk menyelesaikan pembayaran.
         </div>
 
         <!-- DATA TRANSAKSI -->
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <!-- STATUS RFID -->
+        <!-- STATUS -->
         <div class="text-center mt-5">
 
             <h1 class="text-primary">
@@ -79,7 +79,7 @@
             </h1>
 
             <h3 class="text-primary mt-3">
-                Tempelkan Kartu RFID
+                Menunggu Tap Kartu...
             </h3>
 
             <br>
@@ -96,25 +96,21 @@
 @endsection
 
 
-{{-- AJAX CHECK RFID --}}
+{{-- AJAX CHECK STATUS --}}
 @if($transaksi->status != 'success')
 <script>
 setInterval(function () {
 
-    fetch("{{ route('admin.transaksi.check_rfid', $transaksi->id) }}")
+    fetch("{{ route('siswa.transaksi.check_rfid', $transaksi->id) }}")
         .then(res => res.json())
         .then(data => {
 
             document.getElementById('status').innerHTML = data.status;
 
-            if (data.status === 'rfid_verified') {
-                window.location.href =
-                    "{{ route('admin.transaksi.sidik_jari', $transaksi->id) }}";
-            }
-
+            // ✅ SUKSES = SELESAI TRANSAKSI
             if (data.status === 'success') {
                 window.location.href =
-                    "{{ route('admin.transaksi.index') }}";
+                    "{{ route('siswa.transaksi.index') }}";
             }
 
         });

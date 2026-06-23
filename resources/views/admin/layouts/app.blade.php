@@ -162,11 +162,12 @@
 						>
 							<a class="dropdown-item" href="/admin/change"><i class="dw dw-password"></i> Ganti Password</a>
 							<a class="dropdown-item" href="#"><i class="dw dw-book"></i> Manual Book</a>
-							<a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-	              document.getElementById('logout-form').submit();"><i class="dw dw-logout"></i> Log Out</a>
-							<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-			          @csrf
-			        </form>
+							<form method="POST" action="{{ route('logout') }}">
+								@csrf
+								<button type="submit" class="dropdown-item" style="border:none; background:none;">
+									<i class="dw dw-logout"></i> Log Out
+								</button>
+							</form>
 						</div>
 					</div>
 				</div>
@@ -377,12 +378,6 @@
 						<a href="/admin/produk" class="dropdown-toggle no-arrow @if ($activePage == 'produk') active @endif">
 							<span class="micon bi bi-box-seam"></span>
 							<span class="mtext">Produk</span>
-						</a>
-						</li>
-						<li>
-						<a href="/admin/transaksi" class="dropdown-toggle no-arrow @if ($activePage == 'transaksi') active @endif">
-							<span class="micon bi bi-arrow-left-right"></span>
-							<span class="mtext">Transaksi</span>
 						</a>
 						</li>
 					</ul>

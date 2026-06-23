@@ -21,7 +21,7 @@
                         <li class="breadcrumb-item">
                             <a href="/admin/siswa">Pendaftaran Autentikasi</a>
                         </li>
-                        <li class="breadcrumb-item active">Tambah Data</li>
+                        <li class="breadcrumb-item active">Register Siswa</li>
                     </ol>
                 </nav>
 

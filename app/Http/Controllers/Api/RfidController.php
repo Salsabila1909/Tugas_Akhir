@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Produk;
 use App\Models\Siswa;
 use App\Models\Rfid;
 use App\Models\Transaksi;
@@ -105,92 +105,91 @@ class RfidController extends Controller
      * =====================================
      */
     public function tab_kartu(Request $request)
-    {
-        $request->validate([
-            'uid' => 'required'
-        ]);
+{
+    $request->validate([
+        'uid' => 'required'
+    ]);
 
-        return DB::transaction(function () use ($request) {
+    try {
+
+        $result = DB::transaction(function () use ($request) {
 
             $uid = strtoupper(trim($request->uid));
 
-            /**
-             * Cari RFID
-             */
-            $rfid = Rfid::with('siswa')
-                ->where('uid', $uid)
-                ->first();
+            $rfid = Rfid::with('siswa')->where('uid', $uid)->first();
 
             if (!$rfid) {
-
-                return response()->json([
+                return [
                     'success' => false,
                     'message' => 'RFID tidak terdaftar'
-                ]);
+                ];
             }
 
-            /**
-             * Cari siswa
-             */
             $siswa = $rfid->siswa;
 
-            if (!$siswa) {
-
-                return response()->json([
+            if (!$siswa || $siswa->status !== 'terdaftar') {
+                return [
                     'success' => false,
-                    'message' => 'Data siswa tidak ditemukan'
-                ]);
+                    'message' => 'Siswa tidak valid'
+                ];
             }
 
-            /**
-             * Pastikan siswa aktif
-             */
-            if ($siswa->status !== 'terdaftar') {
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa belum aktif'
-                ]);
-            }
-
-            /**
-             * Cari transaksi pending
-             */
-            $transaksi = Transaksi::where(
-                    'siswa_id',
-                    $siswa->id
-                )
+            $transaksi = Transaksi::where('siswa_id', $siswa->id)
                 ->where('status', 'pending')
                 ->latest()
                 ->lockForUpdate()
                 ->first();
 
             if (!$transaksi) {
-
-                return response()->json([
+                return [
                     'success' => false,
-                    'message' => 'Tidak ada transaksi aktif'
-                ]);
+                    'message' => 'Tidak ada transaksi pending'
+                ];
             }
 
-            /**
-             * Update RFID verified
-             */
+            if ($siswa->saldo < $transaksi->total) {
+                return [
+                    'success' => false,
+                    'message' => 'Saldo tidak cukup'
+                ];
+            }
+
+            $produk = Produk::find($transaksi->produk_id);
+
+            if (!$produk || $produk->stok < $transaksi->qty) {
+                return [
+                    'success' => false,
+                    'message' => 'Stok tidak cukup'
+                ];
+            }
+
+            // EKSEKUSI AMAN
+            $siswa->decrement('saldo', $transaksi->total);
+            $produk->decrement('stok', $transaksi->qty);
+
             $transaksi->update([
-                'status'   => 'rfid_verified',
+                'status' => 'success',
                 'rfid_uid' => $uid
             ]);
 
-            return response()->json([
-                'success'       => true,
-                'message'       => 'RFID berhasil diverifikasi',
-                'transaksi_id'  => $transaksi->id,
-                'siswa_id'      => $siswa->id,
-                'siswa'         => $siswa->nama,
-                'type'          => $transaksi->type,
-                'total'         => $transaksi->total,
-                'next'          => 'fingerprint'
-            ]);
+            return [
+                'success' => true,
+                'message' => 'Pembayaran berhasil',
+                'siswa' => $siswa->nama,
+                'total' => $transaksi->total,
+                'saldo_sisa' => $siswa->saldo
+            ];
         });
+
+        return response()->json($result);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error',
+            'error' => $e->getMessage()
+        ]);
     }
+}
 }

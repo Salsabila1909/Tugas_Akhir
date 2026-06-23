@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
@@ -13,15 +14,19 @@ class LoginController extends Controller
      */
     public function index()
     {
-        if (Auth::check()) {
+        if (Auth::guard('web')->check()) {
 
-            if (Auth::user()->level == 1) {
+            $user = Auth::guard('web')->user();
+
+            if ($user->level == 1) {
                 return redirect()->route('admin.home');
             }
 
-            if (Auth::user()->level == 0) {
+            if ($user->level == 0) {
                 return redirect()->route('siswa.home');
             }
+
+            Auth::guard('web')->logout();
         }
 
         return view('auth.login');
@@ -37,34 +42,25 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        $credentials = [
-            'username' => $request->username,
-            'password' => $request->password,
-            'status'   => 1,
-        ];
-
-        if (!Auth::attempt($credentials)) {
-            return redirect()->route('login')
-                ->with('error', 'Username atau Password Salah!');
+        // 🔥 PENTING: pakai guard web konsisten
+        if (!Auth::guard('web')->attempt($request->only('username', 'password'))) {
+            return redirect()->route('login')->with('error', 'Login gagal');
         }
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
 
-        // Admin
         if ($user->level == 1) {
             return redirect()->route('admin.home');
         }
 
-        // Siswa
         if ($user->level == 0) {
             return redirect()->route('siswa.home');
         }
 
-        // Jika level tidak valid
-        Auth::logout();
-
+        // fallback kalau level tidak valid
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -73,11 +69,40 @@ class LoginController extends Controller
     }
 
     /**
+     * Fingerprint login
+     */
+    public function checkFingerprintLogin(Request $request)
+    {
+        $userId = cache()->pull('fingerprint_login');
+
+        if (!$userId) {
+            return response()->json(['success' => false]);
+        }
+
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['success' => false]);
+        }
+
+        Auth::guard('web')->login($user);
+
+        $request->session()->regenerate();
+
+        return response()->json([
+            'success' => true,
+            'redirect' => $user->level == 1
+                ? route('admin.home')
+                : route('siswa.home')
+        ]);
+    }
+
+    /**
      * Logout
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

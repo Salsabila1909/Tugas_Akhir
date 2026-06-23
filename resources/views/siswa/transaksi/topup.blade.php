@@ -1,4 +1,4 @@
-@extends('admin.layouts.app', ['activePage' => 'transaksi'])
+@extends('siswa.layouts.app', ['activePage' => 'transaksi'])
 
 @section('content')
 
@@ -18,7 +18,7 @@
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item">Transaksi</li>
                         <li class="breadcrumb-item">
-                            <a href="/admin/transaksi">Data Transaksi</a>
+                            <a href="/siswa/transaksi">Data Transaksi</a>
                         </li>
                         <li class="breadcrumb-item active">Topup Saldo</li>
                     </ol>
@@ -40,7 +40,7 @@
             </div>
 
             <div class="pull-right">
-                <a href="/admin/transaksi" class="btn btn-primary btn-sm">
+                <a href="/siswa/transaksi" class="btn btn-primary btn-sm">
                     <i class="fa fa-arrow-left"></i> Back
                 </a>
             </div>
@@ -60,19 +60,18 @@
         @endif
 
 
-        <form action="{{ route('admin.transaksi.storeTopup') }}" method="POST">
+        <form action="{{ route('siswa.transaksi.storeTopup') }}" method="POST">
 
             @csrf
 
             <!-- SISWA -->
             <div class="form-group">
-                <label>Pilih Siswa *</label>
-                <select name="siswa_id" class="form-control" required>
-                    <option value="">-- Pilih Siswa --</option>
-                    @foreach($siswa as $s)
-                        <option value="{{ $s->id }}">{{ $s->nama }}</option>
-                    @endforeach
-                </select>
+                <label>Nama Siswa</label>
+
+                <input type="text"
+                    class="form-control"
+                    value="{{ $siswa->nama }}"
+                    readonly>
             </div>
 
             <!-- NOMINAL -->

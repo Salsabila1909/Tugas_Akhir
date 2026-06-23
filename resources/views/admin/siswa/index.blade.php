@@ -34,7 +34,7 @@
 
             <div class="pull-right">
                 <a href="{{ route('admin.siswa.add') }}" class="btn btn-primary btn-sm">
-                    <i class="fa fa-plus"></i> Tambah Data
+                    <i class="fa fa-plus"></i> Registrasi
                 </a>
             </div>
         </div>

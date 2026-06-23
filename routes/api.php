@@ -41,9 +41,13 @@ Route::post(
 );
 
 Route::post(
-    '/fingerprint/verify',
-    [FingerprintController::class,'verify']
+    '/fingerprint/login',
+    [FingerprintController::class, 'login']
 );
+// Route::post(
+//     '/fingerprint/verify',
+//     [FingerprintController::class,'verify']
+// );
 
 /*
 |--------------------------------------------------------------------------

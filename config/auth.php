@@ -70,6 +70,11 @@ return [
                 'model' => App\Models\User::class,
             ],
 
+            'admin' => [
+                'driver' => 'session',
+                'provider' => 'users', // atau Admin model kalau ada
+            ],
+
             'siswa' => [
                 'driver' => 'eloquent',
                 'model' => App\Models\Siswa::class,

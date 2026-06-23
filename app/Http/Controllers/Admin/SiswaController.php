@@ -8,7 +8,10 @@ use App\Models\Siswa;
 use App\Models\Rfid;
 use App\Models\Fingerprint;
 use App\Models\Transaksi;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+
 
 class SiswaController extends Controller
 {
@@ -37,7 +40,7 @@ class SiswaController extends Controller
     // =========================
     public function create()
     {
-        return view('admin.siswa.tambah');
+        return view('admin.siswa.register');
     }
 
     // =========================
@@ -46,11 +49,11 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nis' => 'required',
-            'nama' => 'required',
-            'kontak' => 'required',
-            'alamat' => 'required',
-        ]);
+        'nis' => 'required|unique:users,username',
+        'nama' => 'required',
+        'kontak' => 'required',
+        'alamat' => 'required',
+    ]);
 
         $fotoPath = null;
 
@@ -58,14 +61,23 @@ class SiswaController extends Controller
             $fotoPath = $request->file('foto')->store('siswa', 'public');
         }
 
+        $user = User::create([
+            'name'     => $request->nama,
+            'username' => $request->nis,
+            'password' => Hash::make('123456'),
+            'level'    => 0,
+            'status'   => 1,
+        ]);
+
         $siswa = Siswa::create([
-            'nis' => $request->nis,
-            'nama' => $request->nama,
-            'kontak' => $request->kontak,
-            'alamat' => $request->alamat,
-            'saldo' => $request->saldo ?? 0,
-            'status' => 'belum_terdaftar',
-            'foto' => $fotoPath,
+            'user_id' => $user->id,
+            'nis'     => $request->nis,
+            'nama'    => $request->nama,
+            'kontak'  => $request->kontak,
+            'alamat'  => $request->alamat,
+            'saldo'   => $request->saldo ?? 0,
+            'status'  => 'belum_terdaftar',
+            'foto'    => $fotoPath,
         ]);
 
         return redirect('/admin/siswa/tap-kartu/' . $siswa->id)
@@ -86,33 +98,48 @@ class SiswaController extends Controller
     // UPDATE
     // =========================
     public function update(Request $request, $id)
-    {
-        $siswa = Siswa::findOrFail($id);
+{
+    $siswa = Siswa::findOrFail($id);
 
-        $data = $request->only([
-            'nis',
-            'nama',
-            'kontak',
-            'alamat',
-            'saldo'
-        ]);
+    $request->validate([
+        'nis' => 'required|unique:users,username,' . $siswa->user_id,
+        'nama' => 'required',
+        'kontak' => 'required',
+        'alamat' => 'required',
+    ]);
 
-        if ($request->hasFile('foto')) {
+    $data = $request->only([
+        'nis',
+        'nama',
+        'kontak',
+        'alamat',
+        'saldo'
+    ]);
 
-            if ($siswa->foto) {
-                Storage::disk('public')->delete($siswa->foto);
-            }
+    if ($request->hasFile('foto')) {
 
-            $data['foto'] = $request->file('foto')
-                ->store('siswa', 'public');
+        if ($siswa->foto) {
+            Storage::disk('public')->delete($siswa->foto);
         }
 
-        $siswa->update($data);
-
-        return redirect('/admin/siswa')
-            ->with('success', 'Data berhasil diupdate');
+        $data['foto'] = $request->file('foto')
+            ->store('siswa', 'public');
     }
 
+    if ($siswa->user_id) {
+
+        User::where('id', $siswa->user_id)
+            ->update([
+                'name'     => $request->nama,
+                'username' => $request->nis,
+            ]);
+    }
+
+    $siswa->update($data);
+
+    return redirect('/admin/siswa')
+        ->with('success', 'Data berhasil diupdate');
+}
     // =========================
     // DELETE
     // =========================
@@ -125,11 +152,16 @@ class SiswaController extends Controller
             Storage::disk('public')->delete($siswa->foto);
         }
 
-        // hapus RFID
+       // hapus RFID
         Rfid::where('siswa_id', $siswa->id)->delete();
 
         // hapus fingerprint
         Fingerprint::where('siswa_id', $siswa->id)->delete();
+
+        // hapus akun user
+        if ($siswa->user_id) {
+            User::where('id', $siswa->user_id)->delete();
+        }
 
         // hapus siswa
         $siswa->delete();

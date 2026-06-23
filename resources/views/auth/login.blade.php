@@ -105,15 +105,7 @@
 									</div>
 								</div>
 							</form>
-
-							{{-- REGISTER SISWA --}}
-							<div class="text-center mt-3">
-								<a href="{{ route('siswa.register') }}">
-									Belum punya akun? Daftar
-								</a>
-							</div>
 						</div>
-						</form>
 					</div>
 				</div>
 			</div>
@@ -167,6 +159,25 @@
       e.preventDefault();
   });
   </script>
+<script>
+setInterval(function () {
+
+    fetch('/fingerprint/check-login')
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+                window.location.href = data.redirect;
+            }
+
+        })
+        .catch(error => console.log(error));
+
+}, 1000);
+</script>
+
+</body>
+</html>
 </body>
 </html>
 @endguest

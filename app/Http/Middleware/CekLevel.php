@@ -7,18 +7,23 @@ use Illuminate\Support\Facades\Auth;
 
 class CekLevel
 {
-    public function handle($request, Closure $next, ...$levels)
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        $userLevel = Auth::user()->level;
-
-        if (!empty($levels) && !in_array($userLevel, $levels)) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        return $next($request);
+   public function handle($request, Closure $next, ...$levels)
+{
+    if (!auth()->check()) {
+        return redirect()->route('login');
     }
+
+    $user = auth()->user();
+
+    // pastikan level benar-benar integer
+    $userLevel = (int) $user->level;
+
+    $allowedLevels = array_map('intval', $levels);
+
+    if (!in_array($userLevel, $allowedLevels)) {
+        abort(403, 'Unauthorized');
+    }
+
+    return $next($request);
+}
 }

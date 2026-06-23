@@ -1,4 +1,4 @@
-@extends('admin.layouts.app', [
+@extends('siswa.layouts.app', [
 'activePage' => 'transaksi',
 ])
 
@@ -20,7 +20,7 @@
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item">Transaksi</li>
                         <li class="breadcrumb-item">
-                            <a href="/admin/transaksi">Data Transaksi</a>
+                            <a href="/siswa/transaksi">Data Transaksi</a>
                         </li>
                         <li class="breadcrumb-item active">Payment</li>
                     </ol>
@@ -42,7 +42,7 @@
             </div>
 
             <div class="pull-right">
-                <a href="/admin/transaksi" class="btn btn-primary btn-sm">
+                <a href="/siswa/transaksi" class="btn btn-primary btn-sm">
                     <i class="fa fa-arrow-left"></i> Back
                 </a>
             </div>
@@ -63,20 +63,19 @@
 
 
         <form id="form-payment"
-              action="{{ route('admin.transaksi.storePayment') }}"
+              action="{{ route('siswa.transaksi.storePayment') }}"
               method="POST">
 
             @csrf
 
             <!-- SISWA -->
-            <div class="form-group">
-                <label>Siswa Terdaftar *</label>
-                <select name="siswa_id" class="form-control" required>
-                    <option value="">-- Pilih Siswa --</option>
-                    @foreach($siswa as $s)
-                        <option value="{{ $s->id }}">{{ $s->nama }}</option>
-                    @endforeach
-                </select>
+           <div class="form-group">
+                <label>Nama Siswa</label>
+
+                <input type="text"
+                    class="form-control"
+                    value="{{ $siswa->nama }}"
+                    readonly>
             </div>
 
             <!-- STATUS SCAN -->

@@ -8,16 +8,16 @@ use Illuminate\Support\Facades\Auth;
 
 class SiswaMiddleware
 {
-    public function handle(Request $request, Closure $next)
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        if (Auth::user()->level != 0) {
-            abort(403);
-        }
-
-        return $next($request);
+    public function handle($request, Closure $next)
+{
+    if (!Auth::check()) {
+        return redirect('/login');
     }
+
+    if (Auth::user()->level != 0) {
+        return redirect('/login');
+    }
+
+    return $next($request);
+}
 }

@@ -1,4 +1,4 @@
-@extends('admin.layouts.app', [
+@extends('siswa.layouts.app', [
     'activePage' => 'transaksi',
 ])
 
@@ -36,11 +36,11 @@
             </div>
 
             <div class="pull-right">
-                <a href="{{ route('admin.transaksi.payment') }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('siswa.transaksi.payment') }}" class="btn btn-primary btn-sm">
                     <i class="fa fa-shopping-cart"></i> Payment
                 </a>
 
-                <a href="{{ route('admin.transaksi.topup') }}" class="btn btn-success btn-sm">
+                <a href="{{ route('siswa.transaksi.topup') }}" class="btn btn-success btn-sm">
                     <i class="fa fa-plus-circle"></i> Topup
                 </a>
             </div>
@@ -74,7 +74,7 @@
                     <th>Type</th>
                     <th>Produk</th>
                     <th>Qty</th>
-                    <th>Harga</th>
+                    <th>Total</th>
                     <th>Status</th>
                     <th class="text-center">Action</th>
                 </tr>
@@ -90,12 +90,19 @@
 
                     <td class="text-center">{{ $no++ }}</td>
 
-                    {{-- NAMA SISWA --}}
+                    {{-- SISWA --}}
                     <td>
                         {{ $item->siswa->nama ?? '-' }}
                     </td>
 
-                    <td> @if($item->type == 'topup') <span class="badge badge-success"> Topup </span> @else <span class="badge badge-primary"> Payment </span> @endif </td>
+                    {{-- TYPE --}}
+                    <td>
+                        @if($item->type == 'topup')
+                            <span class="badge badge-success">Topup</span>
+                        @else
+                            <span class="badge badge-primary">Payment</span>
+                        @endif
+                    </td>
 
                     {{-- PRODUK --}}
                     <td>
@@ -108,14 +115,10 @@
 
                     {{-- QTY --}}
                     <td>
-                        @if($item->type == 'payment')
-                            {{ $item->qty ?? '-' }}
-                        @else
-                            -
-                        @endif
+                        {{ $item->qty ?? '-' }}
                     </td>
 
-                    {{-- HARGA --}}
+                    {{-- TOTAL --}}
                     <td>
                         Rp {{ number_format($item->total, 0, ',', '.') }}
                     </td>
@@ -125,42 +128,35 @@
                         @if($item->status == 'pending')
                             <span class="badge badge-warning">Pending</span>
 
-                        @elseif($item->status == 'rfid_verified')
-                            <span class="badge badge-info">RFID OK</span>
-
-                        @elseif($item->status == 'finger_verified')
-                            <span class="badge badge-primary">Finger OK</span>
+                        @elseif($item->status == 'success')
+                            <span class="badge badge-success">Success</span>
 
                         @else
-                            <span class="badge badge-success">Success</span>
+                            <span class="badge badge-secondary">{{ $item->status }}</span>
                         @endif
                     </td>
 
                     {{-- ACTION --}}
                     <td class="text-center">
 
-                        {{-- RFID / TAB KARTU --}}
-                        <a href="{{ route('admin.transaksi.tab_kartu', $item->id) }}"
+                        {{-- DETAIL / TAP KARTU (HANYA JIKA PENDING) --}}
+                        @if($item->status == 'pending')
+                        <a href="{{ route('siswa.transaksi.tab_kartu', $item->id) }}"
                            class="btn btn-primary btn-xs"
-                           title="RFID">
+                           title="Verifikasi Kartu">
                             <i class="fa fa-id-card"></i>
                         </a>
-
-                        {{-- FINGERPRINT --}}
-                        @if($item->status == 'rfid_verified')
-                            <span class="badge badge-success" title="RFID Terverifikasi">
-                                <i class="fa fa-check"></i> Verified
-                            </span>
-                        @else
-                            <a href="{{ route('admin.transaksi.sidik_jari', $item->id) }}"
-                            class="btn btn-info btn-xs"
-                            title="Verifikasi Sidik Jari">
-                               <i class="fa fa-id-badge"></i>
-                            </a>
                         @endif
 
+                        {{-- PROFIL SISWA --}}
+                        <a href="{{ route('siswa.transaksi.profil') }}"
+                        class="btn btn-info btn-xs"
+                        title="cek saldo">
+                            <i class="fa fa-user"></i>
+                        </a>
+
                         {{-- DELETE --}}
-                        <form action="{{ route('admin.transaksi.delete', $item->id) }}"
+                        <form action="{{ route('siswa.transaksi.delete', $item->id) }}"
                               method="POST"
                               style="display:inline-block"
                               onsubmit="return confirm('Yakin hapus transaksi ini?')">
@@ -168,7 +164,7 @@
                             @csrf
                             @method('DELETE')
 
-                            <button type="submit" class="btn btn-danger btn-xs" title="Delete">
+                            <button type="submit" class="btn btn-danger btn-xs">
                                 <i class="fa fa-trash"></i>
                             </button>
 
@@ -181,7 +177,7 @@
                 @empty
 
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="8" class="text-center">
                         Tidak ada data transaksi
                     </td>
                 </tr>
