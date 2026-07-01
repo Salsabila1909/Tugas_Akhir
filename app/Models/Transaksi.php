@@ -18,8 +18,6 @@ class Transaksi extends Model
         'status',
         'metode',
         'rfid_uid',
-        'finger_id',
-        'paid_at'
     ];
 
     // RELASI SISWA

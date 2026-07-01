@@ -11,6 +11,7 @@ use App\Models\Transaksi;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 
 class SiswaController extends Controller
@@ -57,10 +58,11 @@ class SiswaController extends Controller
 
         $fotoPath = null;
 
-        if ($request->hasFile('foto')) {
-            $fotoPath = $request->file('foto')->store('siswa', 'public');
-        }
+    $foto = null;
 
+    if ($request->hasFile('foto')) {
+        $foto = $request->file('foto')->store('siswa', 'public');
+    }
         $user = User::create([
             'name'     => $request->nama,
             'username' => $request->nis,
@@ -144,31 +146,37 @@ class SiswaController extends Controller
     // DELETE
     // =========================
     public function destroy($id)
-    {
+{
+    try {
+
+        DB::beginTransaction();
+
         $siswa = Siswa::findOrFail($id);
 
-        // hapus foto
-        if ($siswa->foto) {
-            Storage::disk('public')->delete($siswa->foto);
-        }
+        Rfid::where('siswa_id', $id)->delete();
+        Fingerprint::where('siswa_id', $id)->delete();
+        Transaksi::where('siswa_id', $id)->delete();
 
-       // hapus RFID
-        Rfid::where('siswa_id', $siswa->id)->delete();
+        $userId = $siswa->user_id;
 
-        // hapus fingerprint
-        Fingerprint::where('siswa_id', $siswa->id)->delete();
-
-        // hapus akun user
-        if ($siswa->user_id) {
-            User::where('id', $siswa->user_id)->delete();
-        }
-
-        // hapus siswa
         $siswa->delete();
 
-        return redirect('/admin/siswa')
-            ->with('success', 'Data berhasil dihapus');
+        if ($userId) {
+            User::where('id', $userId)->delete();
+        }
+
+        DB::commit();
+
+        return back()->with('success', 'Berhasil dihapus');
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        dd($e->getMessage());
+
     }
+}
 
     // =========================
     // TAP KARTU RFID

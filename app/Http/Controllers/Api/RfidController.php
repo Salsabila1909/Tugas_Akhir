@@ -17,26 +17,28 @@ class RfidController extends Controller
      * CEK SISWA BELUM TERDAFTAR RFID
      * =====================================
      */
-    public function pending()
-    {
-        $siswa = Siswa::where('status', 'belum_terdaftar')
-            ->whereDoesntHave('rfid')
-            ->orderBy('id')
-            ->first();
+   public function pending()
+{
+    $siswa = Siswa::where('status', 'belum_terdaftar')
+        ->whereDoesntHave('rfid')
+        ->orderBy('id')
+        ->first();
 
-        if (!$siswa) {
-
-            return response()->json([
-                'success' => false
-            ]);
-        }
+    if (!$siswa) {
 
         return response()->json([
-            'success'  => true,
-            'siswa_id' => $siswa->id,
-            'nama'     => $siswa->nama
+            'success' => false,
+            'message' => 'Tidak ada siswa yang menunggu registrasi RFID'
         ]);
     }
+
+    return response()->json([
+        'success'  => true,
+        'message'  => 'Pending RFID ditemukan',
+        'siswa_id' => $siswa->id,
+        'nama'     => $siswa->nama
+    ]);
+}
 
     /**
      * =====================================
@@ -116,7 +118,9 @@ class RfidController extends Controller
 
             $uid = strtoupper(trim($request->uid));
 
-            $rfid = Rfid::with('siswa')->where('uid', $uid)->first();
+            $rfid = Rfid::with('siswa')
+                ->where('uid', $uid)
+                ->first();
 
             if (!$rfid) {
                 return [
@@ -137,7 +141,7 @@ class RfidController extends Controller
             $transaksi = Transaksi::where('siswa_id', $siswa->id)
                 ->where('status', 'pending')
                 ->latest()
-                ->lockForUpdate()
+                //->lockForUpdate()
                 ->first();
 
             if (!$transaksi) {
@@ -147,37 +151,82 @@ class RfidController extends Controller
                 ];
             }
 
-            if ($siswa->saldo < $transaksi->total) {
+            /*
+            |--------------------------------------------------------------------------
+            | TOPUP
+            |--------------------------------------------------------------------------
+            */
+            if ($transaksi->type === 'topup') {
+
+                $siswa->increment('saldo', $transaksi->total);
+
+                $transaksi->update([
+                    'status'   => 'success',
+                    'rfid_uid' => $uid
+                ]);
+
                 return [
-                    'success' => false,
-                    'message' => 'Saldo tidak cukup'
+                    'success' => true,
+                    'message' => 'Topup berhasil',
+                    'siswa'   => $siswa->nama,
+                    'total'   => $transaksi->total,
+                    'saldo'   => $siswa->fresh()->saldo
                 ];
             }
 
-            $produk = Produk::find($transaksi->produk_id);
+            /*
+            |--------------------------------------------------------------------------
+            | PAYMENT
+            |--------------------------------------------------------------------------
+            */
+            if ($transaksi->type === 'payment') {
 
-            if (!$produk || $produk->stok < $transaksi->qty) {
+                if ($siswa->saldo < $transaksi->total) {
+                    return [
+                        'success' => false,
+                        'message' => 'Saldo tidak cukup'
+                    ];
+                }
+
+                $produk = Produk::lockForUpdate()->find($transaksi->produk_id);
+
+                if (!$produk) {
+                    return [
+                        'success' => false,
+                        'message' => 'Produk tidak ditemukan'
+                    ];
+                }
+
+                if ($produk->stok < $transaksi->qty) {
+                    return [
+                        'success' => false,
+                        'message' => 'Stok tidak cukup'
+                    ];
+                }
+
+                // Kurangi saldo siswa
+                $siswa->decrement('saldo', $transaksi->total);
+
+                // Kurangi stok produk
+                $produk->decrement('stok', $transaksi->qty);
+
+                $transaksi->update([
+                    'status'   => 'success',
+                    'rfid_uid' => $uid
+                ]);
+
                 return [
-                    'success' => false,
-                    'message' => 'Stok tidak cukup'
+                    'success'    => true,
+                    'message'    => 'Pembayaran berhasil',
+                    'siswa'      => $siswa->nama,
+                    'total'      => $transaksi->total,
+                    'saldo_sisa' => $siswa->fresh()->saldo
                 ];
             }
-
-            // EKSEKUSI AMAN
-            $siswa->decrement('saldo', $transaksi->total);
-            $produk->decrement('stok', $transaksi->qty);
-
-            $transaksi->update([
-                'status' => 'success',
-                'rfid_uid' => $uid
-            ]);
 
             return [
-                'success' => true,
-                'message' => 'Pembayaran berhasil',
-                'siswa' => $siswa->nama,
-                'total' => $transaksi->total,
-                'saldo_sisa' => $siswa->saldo
+                'success' => false,
+                'message' => 'Tipe transaksi tidak dikenali'
             ];
         });
 
@@ -188,8 +237,8 @@ class RfidController extends Controller
         return response()->json([
             'success' => false,
             'message' => 'Server error',
-            'error' => $e->getMessage()
-        ]);
+            'error'   => $e->getMessage()
+        ], 500);
     }
 }
 }

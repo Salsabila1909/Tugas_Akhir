@@ -136,7 +136,7 @@ Route::prefix('siswa')
                 Route::post('/payment/store', 'storePayment')->name('storePayment');
 
                 Route::get('/topup', 'createTopup')->name('topup');
-                Route::post('/topup/store')->name('storeTopup');
+                Route::post('/topup/store', 'storeTopup')->name('storeTopup');
 
                 Route::get('/{id}/tab-kartu', 'tabKartu')->name('tab_kartu');
                 Route::get('/{id}/check-rfid', 'checkRfid')->name('check_rfid');

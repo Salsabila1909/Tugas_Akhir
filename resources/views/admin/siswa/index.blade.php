@@ -83,10 +83,10 @@
                     {{-- FOTO --}}
                     <td class="text-center">
                         @if($data->foto)
-                            <img src="{{ asset('storage/'.$data->foto) }}"
-                                 width="60"
-                                 height="60"
-                                 style="object-fit: cover; border-radius: 10px;">
+                           <img src="{{ asset('storage/siswa/'.$data->foto) }}"
+                            width="60"
+                            height="60"
+                            style="object-fit: cover; border-radius: 10px;">
                         @else
                             -
                         @endif

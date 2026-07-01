@@ -188,7 +188,7 @@ setInterval(function () {
         </script>
     @else
         <script>
-            window.location = "/siswa/home";
+            window.location = "/siswa/transaksi";
         </script>
     @endif
 @endauth
